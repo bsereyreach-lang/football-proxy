@@ -1,34 +1,46 @@
-const express = require("express")
-const axios = require("axios")
+const express = require("express");
+const axios = require("axios");
+const cors = require("cors");
 
-const app = express()
+const app = express();
+app.use(cors());
 
-const API_KEY = "c4f9df1c85ace48c411d65588bb8a7e5"
+const PORT = process.env.PORT || 10000;
+const API_KEY = process.env.API_KEY;
 
+// Base API-Football URL
+const BASE_URL = "https://v3.football.api-sports.io";
+
+// Get fixtures
+app.get("/fixtures", async (req, res) => {
+    try {
+        const response = await axios.get(`${BASE_URL}/fixtures`, {
+            headers: {
+                "x-apisports-key": API_KEY
+            }
+        });
+
+        res.json(response.data);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to fetch fixtures" });
+    }
+});
+
+// Live matches
 app.get("/live", async (req, res) => {
-  try {
-    const response = await axios.get(
-      "https://v3.football.api-sports.io/fixtures?live=all",
-      {
-        headers: {
-          "x-apisports-key": API_KEY
-        }
-      }
-    )
+    try {
+        const response = await axios.get(`${BASE_URL}/fixtures?live=all`, {
+            headers: {
+                "x-apisports-key": API_KEY
+            }
+        });
 
-    const matches = response.data.response.map(m => ({
-      home: m.teams.home.name,
-      away: m.teams.away.name,
-      score: `${m.goals.home ?? 0}-${m.goals.away ?? 0}`,
-      status: m.fixture.status.short,
-      minute: m.fixture.status.elapsed || 0
-    }))
+        res.json(response.data);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to fetch live matches" });
+    }
+});
 
-    res.json(matches)
-
-  } catch (err) {
-    res.json([])
-  }
-})
-
-app.listen(3000, () => console.log("Server running"))
+app.listen(PORT, () => {
+    console.log("Server running on port " + PORT);
+});
